@@ -76,7 +76,7 @@ app.post("/send-email", function(req, res) {
   }</p><p>userName: ${req.body.name}</p>`;
   let mailOptions = {
     from: '"IdleInterventions" <noreply@gmail.com>', // sender address
-    to: "jason.carmel@Possible.com", // list of receivers
+    to: "jason.carmel@Possible.com, rcolepeterson@gmail.com", // list of receivers
     subject: subject,
     text: msg, // plain text body
     html: msg // html body
