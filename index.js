@@ -5,6 +5,7 @@ const app = express();
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const url = "https://www.londontraffic.org/";
+const nodeMailer = require("nodemailer");
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -37,6 +38,7 @@ const selectData = element => {
   return Promise.resolve({ title: data[0].title, reason: reasons[0].reason });
 };
 
+// returns traffic info.
 app.get("/info", function(req, res) {
   axios
     .get(url)
@@ -50,6 +52,43 @@ app.get("/info", function(req, res) {
     .catch(error => {
       console.log(error);
     });
+});
+// expect a user object
+/*
+email: user.email,
+    country: user.country,
+    name: user.display_name
+    */
+//send email to jason that some one has used the idle interventions app.
+app.post("/send-email", function(req, res) {
+  let transporter = nodeMailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+    auth: {
+      user: "colepeterson1775@gmail.com",
+      pass: "uonemqayseqmjcty"
+    }
+  });
+  let subject = `${req.body.email} used idleInterventions`;
+  let msg = `<h1>email: ${req.body.email}</h1><p>country: ${
+    req.body.country
+  }</p><p>userName: ${req.body.name}</p>`;
+  let mailOptions = {
+    from: '"IdleInterventions" <noreply@gmail.com>', // sender address
+    to: "rcolepeterson@gmail.com", // list of receivers
+    subject: subject,
+    text: msg, // plain text body
+    html: msg // html body
+  };
+
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      return console.log(error);
+    }
+    console.log("Message %s sent: %s", info.messageId, info.response);
+    res.status(200).json({ type: "success", info: info.response });
+  });
 });
 
 app.get("/", function(req, res) {
