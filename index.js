@@ -28,14 +28,19 @@ const selectData = element => {
   $("body div:nth-child(6) div.portlet-body p").each((i, elem) => {
     let reason = $(elem).text();
     let snippedReason = reason.split("]", 1)[0] + "]";
+
     if (snippedReason === "]") {
-      snippedReason = "Congestion [Minor Disruption - Up To 15 Minutes Delay]";
+      snippedReason = "Congestion [Minor Disruption - Up To 25 Minutes Delay]";
     }
 
     reasons.push({ reason: snippedReason });
   });
+  let myreason = "";
+  if (reasons[0].reason) {
+    myreason = reasons[0].reason;
+  }
 
-  return Promise.resolve({ title: data[0].title, reason: reasons[0].reason });
+  return Promise.resolve({ title: data[0].title, reason: myreason });
 };
 
 // returns traffic info.
@@ -45,21 +50,29 @@ app.get("/info", function(req, res) {
     .then(response => {
       selectData(response.data).then(item => {
         res.setHeader("Content-Type", "application/json");
-        //res.send(JSON.stringify({ traffic: item }));
         res.status(200).json({ type: "success", loc: item });
       });
     })
     .catch(error => {
       console.log(error);
+      let item = {
+        title:
+          "A30 westbound between A308 and M25 | Westbound | Congestion South East Surrey",
+        reason: "Congestion [Minor Disruption - Up To 25 Minutes Delay]"
+      };
+      res.status(200).json({ type: "success", loc: item });
     });
 });
-// expect a user object
+
 /*
-email: user.email,
-    country: user.country,
-    name: user.display_name
+Send email to Jason and Cole for analytics.
+expect a user object
+    {
+      email: user.email,
+      country: user.country,
+      name: user.display_name
+    }
     */
-//send email to jason that some one has used the idle interventions app.
 app.post("/send-email", function(req, res) {
   let transporter = nodeMailer.createTransport({
     host: "smtp.gmail.com",
@@ -86,7 +99,7 @@ app.post("/send-email", function(req, res) {
     if (error) {
       return console.log(error);
     }
-    console.log("Message %s sent: %s", info.messageId, info.response);
+    //console.log("Message %s sent: %s", info.messageId, info.response);
     res.status(200).json({ type: "success", info: info.response });
   });
 });
@@ -101,5 +114,5 @@ module.exports = {
 
 const server = app.listen(process.env.PORT || 8080, () => {
   const port = server.address().port;
-  console.log(`App listening on port ${port}`);
+  //console.log(`App listening on port ${port}`);
 });
