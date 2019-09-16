@@ -5,6 +5,8 @@ const app = express();
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const url = "https://www.londontraffic.org/";
+const urlNYC =
+  "https://traffic.api.here.com/traffic/6.3/incidents.json?app_id=EJdxxsO8hXrE0JVWwxQk&app_code=rb6BECpUj0omaaeibHeVZw&bbox=41.72886531117612,-74.62237437500002;39.68242929874689,-73.39190562500002&criticality=major&maxresults=1";
 const nodeMailer = require("nodemailer");
 
 app.use(bodyParser.json());
@@ -43,7 +45,7 @@ const selectData = element => {
   return Promise.resolve({ title: data[0].title, reason: myreason });
 };
 
-// returns traffic info.
+// returns traffic info. LONDON.
 app.get("/info", function(req, res) {
   axios
     .get(url)
@@ -61,6 +63,43 @@ app.get("/info", function(req, res) {
         reason: "Congestion [Minor Disruption - Up To 25 Minutes Delay]"
       };
       res.status(200).json({ type: "success", loc: item });
+    });
+});
+
+// selectContent - NYC -
+
+const selectDataNYC = dataTraffic => {
+  const data = [];
+  const reasons = [];
+  let myreason =
+    dataTraffic.TRAFFIC_ITEMS.TRAFFIC_ITEM[0].TRAFFIC_ITEM_DESCRIPTION[0].value;
+  let title = "Heavy Traffic: LOTS OF SLOW TRAFFIC";
+
+  return Promise.resolve({
+    title: title,
+    reason: myreason,
+    timestamp: dataTraffic.TIMESTAMP
+  });
+};
+
+// returns traffic info. LONDON.
+app.get("/infonyc", function(req, res) {
+  axios
+    .get(urlNYC)
+    .then(response => {
+      selectDataNYC(response.data).then(item => {
+        res.setHeader("Content-Type", "application/json");
+        res.status(200).json({ type: "success", traffic: item });
+      });
+    })
+    .catch(error => {
+      console.log(error);
+      let item = {
+        title: "Heavy Traffic: LOTS OF SLOW TRAFFIC",
+        reason: "At West St - Construction work.",
+        timestamp: new Date()
+      };
+      res.status(200).json({ type: "success", traffic: item });
     });
 });
 
@@ -84,9 +123,7 @@ app.post("/send-email", function(req, res) {
     }
   });
   let subject = `${req.body.email} used idleInterventions`;
-  let msg = `<h1>email: ${req.body.email}</h1><p>country: ${
-    req.body.country
-  }</p><p>userName: ${req.body.name}</p>`;
+  let msg = `<h1>email: ${req.body.email}</h1><p>country: ${req.body.country}</p><p>userName: ${req.body.name}</p>`;
   let mailOptions = {
     from: '"IdleInterventions" <noreply@gmail.com>', // sender address
     to: "jason.carmel@Possible.com, rcolepeterson@gmail.com", // list of receivers
